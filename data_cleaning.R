@@ -41,14 +41,16 @@ df <- df[!duplicated(df)]
 #get size
 length(unique(df$user_id)) 
 
+# ASSIGN VALUES #
 # set variable value conditional on another var
-df$var_a[df$var_b == 0] <- NA
+# df$var_a[df$var_b == 0] <- NA
 
-df[ , var_a:=(ifelse(var_b == 1 & Time < 25, 1, 0))] #alternative using ifelse
+df_panel <- df_panel %>%
+  mutate(y = ifelse(year_return == year, 1, 0)) #ifelse
 
 #replace values bigger than 3 with a 3 for Eating score
 df <- df %>%
-  mutate( Eating1 = replace(Eating1, Eating1 > 3, 3))
+  mutate(Eating1 = replace(Eating1, Eating1 > 3, 3))
 
 #convert dates to dates values if character
 df$date <- ymd(df$date)
@@ -87,12 +89,22 @@ df <- df %>%
 
 
 
-
+# DROP ROWS
 # restrict df to UK
 df <- df[country == "UK",]
 
+# DROP COLUMNS
 # drop one  column (return_UK)
-df <- subset(df, select = -c(return_UK))
+df <- subset(df, select = -c(return_UK)) #for one column only no need to put it in c()
+
+# FILTER 
+df %>%
+  filter(year_migr > 2013 
+         & nationality_bac %in% c("France", "Spain")) 
+
+# GROUP 
+df %>%
+  group_by(nationality_bac) 
 
 
 # rank n. users by nationality
@@ -130,7 +142,19 @@ eating <- df %>%
 
 
 #### JOIN ####
-df <- attendance %>%
-  left_join(sleep, by = c("id", "Time")) # inner or outer or right or full 
+df <- left_join(x, y, by = c("id", "Time")) 
+  # inner_join keeps all that have a match 
+  # outer joins:  
+    #right_join keeps all obs in y 
+    #full_join keeps all obs of x and y
 
-number_UK <- merge(number_UK_migrants, number_tot_users, by='nationality_bac')
+df <- attendance %>%
+  left_join(sleep, by = c("id", "Time")) #if need to merge more like this can pipe pther df
+
+# full merge with base 
+number_UK <- merge(number_UK_migrants, number_tot_users, by=c('nationality_bac','time'), all = TRUE) 
+
+
+
+
+#### APPEND #####
